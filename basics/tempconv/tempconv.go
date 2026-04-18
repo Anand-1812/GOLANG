@@ -18,3 +18,7 @@ func (c Celsisus) String() string {
 func (f Farenheit) String() string {
 	return fmt.Sprintf("%g F", f)
 }
+
+// Now we can use this function in main file after importing there like any other
+// go imports
+
