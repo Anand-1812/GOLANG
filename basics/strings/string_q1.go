@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
+	"strings"
 )
 
 func comma(s string) string {
@@ -38,5 +39,18 @@ func main() {
 	fmt.Print("Enter the value: ")
 	fmt.Scan(&s)
 
-	fmt.Println(comma(s))
+	dot := strings.LastIndex(s, ".")
+	var s1, s2 string
+
+	if dot >= 0 {
+		s1 = s[:dot]
+		s2 = s[dot:]
+	} else {
+		s1 = s
+		s2 = ""
+	}
+
+	s1 = comma(s1)
+	fmt.Println(s1+s2)
+
 }
