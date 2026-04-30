@@ -1,0 +1,13 @@
+<h1>Issues</h1>
+<ul>
+{{range .Items}}
+  <li>
+    <a href="/issue?id={{.Number}}">
+      #{{.Number}} - {{.Title}}
+    </a>
+  </li>
+{{end}}
+</ul>
+
+<a href="/users">Users</a> |
+<a href="/milestones">Milestones</a>
