@@ -30,7 +30,7 @@ func main() {
 			fmt.Println("No links found.")
 		}
 		for i, link := range found {
-			fmt.Printf("  [%d] %s\n", i+1, link)
+			fmt.Printf("  [%d] [%s] %s\n", i+1, link.Type, link.URL)
 		}
 
 	case "outline":
