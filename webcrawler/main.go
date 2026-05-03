@@ -60,6 +60,13 @@ func main() {
 		fmt.Println()
 		fmt.Println("=== HTML Tree (indented) ===")
 		internals.Print(doc)
+	
+	case "count":
+		fmt.Printf("=== Count for %s ===\n", url)
+		words, images := internals.CountWordAndImg(doc)
+
+		fmt.Printf("Words: %d\n", words)
+		fmt.Printf("Words: %d\n", images)
 
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", command)
@@ -76,4 +83,5 @@ func printUsage() {
 	fmt.Println("  crawler raw     <url>   — print HTML tree (book style)")
 	fmt.Println("  crawler summary <url>   — print node type counts")
 	fmt.Println("  crawler all     <url>   — run all of the above")
+	fmt.Println("  crawler count   <url>   — count words and images")
 }
