@@ -5,16 +5,21 @@ import (
 	"flag"
 )
 
+type Kelvin float64
 type Celsius float64
 type Fahrenheit float64
 type celsiusFlag struct{ Celsius }
 
 func (c Celsius) String() string {
-	return fmt.Sprintf("%.1fC", c)
+	return fmt.Sprintf("%.1f°C", c)
 }
 
 func FToC(f Fahrenheit) Celsius {
 	return Celsius((f-32) * 5/9)
+}
+
+func KToC(k Kelvin) Celsius {
+	return Celsius(k - 273.15)	
 }
 
 func (cf *celsiusFlag) Set(s string) error {
@@ -30,6 +35,8 @@ func (cf *celsiusFlag) Set(s string) error {
 		case "F", "°F":
 			cf.Celsius = FToC(Fahrenheit(value))
 			return nil
+		case "K", "°K":
+			cf.Celsius = KToC(Kelvin(value))
 	}
 
 	return fmt.Errorf("Invalid temperature %q", s)
