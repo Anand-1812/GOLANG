@@ -4,15 +4,15 @@ type literal float64
 
 type unary struct {
 	op rune
-	x Expr
+	x  Expr
 }
 
 type binary struct {
-	op rune
+	op   rune
 	x, y Expr
 }
 
 type call struct {
-	fn string
+	fn   string
 	args []Expr
 }
