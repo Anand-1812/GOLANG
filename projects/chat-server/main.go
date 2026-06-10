@@ -49,7 +49,7 @@ func (s *Server) HandleClient(conn net.Conn) {
 	client := CreateClient(username, conn)
 	s.clients[username] = client
 
-	fmt.Print("%s joins the chat", username)
+	fmt.Printf("%s joins the chat\n", username)
 
 	buffer := make([]byte, 1024)
 
