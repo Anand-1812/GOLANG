@@ -30,6 +30,19 @@ func CreateClient(username string, conn net.Conn) *Client {
 	}
 }
 
+func (s *Server) Broadcast(sender string, msg string) {
+	for name, client := range s.clients {
+		if name == sender {
+			continue
+		}
+
+		_, err := client.Conn.Write([]byte(msg))
+		if err != nil {
+			fmt.Printf("Failed to send to %s : %v\n", name, err)
+		}
+	}
+}
+
 func (s *Server) HandleClient(conn net.Conn) {
 	defer conn.Close()
 
@@ -49,14 +62,19 @@ func (s *Server) HandleClient(conn net.Conn) {
 	client := CreateClient(username, conn)
 	s.clients[username] = client
 
-	fmt.Printf("%s joins the chat\n", username)
+	s.Broadcast(username, fmt.Sprintf("%s joins the chat\n", username))
 
 	buffer := make([]byte, 1024)
 
 	for {
 		n, err := conn.Read(buffer)
 		if err != nil {
-			fmt.Printf("%s disconnected\n", username)
+			delete(s.clients, username)
+			s.Broadcast(
+				username, 
+				fmt.Sprintf("%s left the chat\n", username),
+			)
+
 			return
 		}
 
