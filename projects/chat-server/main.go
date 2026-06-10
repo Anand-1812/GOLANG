@@ -1,110 +1,146 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"strings"
+  "fmt"
+  "net"
+  "strings"
 )
 
 type Client struct {
-	Name string
-	Conn net.Conn
+  Name string
+  Conn net.Conn
 }
 
 type Server struct {
-	Address string
-	clients map[string]*Client
+  Address string
+  clients map[string]*Client
 }
 
 func CreateServer(addr string) *Server {
-	return &Server{
-		Address: addr,
-		clients: make(map[string]*Client),
-	}
+  return &Server{
+    Address: addr,
+    clients: make(map[string]*Client),
+  }
 }
 
 func CreateClient(username string, conn net.Conn) *Client {
-	return &Client{
-		Name: username,
-		Conn: conn,
-	}
+  return &Client{
+    Name: username,
+    Conn: conn,
+  }
 }
 
 func (s *Server) Broadcast(sender string, msg string) {
-	for name, client := range s.clients {
-		if name == sender {
-			continue
-		}
+  for name, client := range s.clients {
+    if name == sender {
+      continue
+    }
 
-		_, err := client.Conn.Write([]byte(msg))
-		if err != nil {
-			fmt.Printf("Failed to send to %s : %v\n", name, err)
-		}
-	}
+    _, err := client.Conn.Write([]byte(msg))
+    if err != nil {
+      fmt.Printf("Failed to send to %s: %v\n", name, err)
+    }
+  }
 }
 
 func (s *Server) HandleClient(conn net.Conn) {
-	defer conn.Close()
+  defer conn.Close()
 
-	fmt.Println("New user connected")
+  fmt.Println("New user connected")
 
-	_, err := conn.Write([]byte("Enter username:"))
-	if err != nil {return}
+  var username string
 
-	// take the user name and proceed for storing
-	name := make([]byte, 1024)
-	n, err := conn.Read(name)
-	if err != nil {
-		return
-	}
+  for {
+    _, err := conn.Write([]byte("Enter username: "))
+    if err != nil {
+      return
+    }
 
-	username := strings.TrimSpace(string(name[:n]))
-	client := CreateClient(username, conn)
-	s.clients[username] = client
+    nameBuf := make([]byte, 1024)
 
-	s.Broadcast(username, fmt.Sprintf("%s joins the chat\n", username))
+    n, err := conn.Read(nameBuf)
+    if err != nil {
+      return
+    }
 
-	buffer := make([]byte, 1024)
+    username = strings.TrimSpace(string(nameBuf[:n]))
 
-	for {
-		n, err := conn.Read(buffer)
-		if err != nil {
-			delete(s.clients, username)
-			s.Broadcast(
-				username, 
-				fmt.Sprintf("%s left the chat\n", username),
-			)
+    if username == "" {
+      conn.Write([]byte("Username cannot be empty\n"))
+      continue
+    }
 
-			return
-		}
+    if _, exists := s.clients[username]; exists {
+      conn.Write([]byte("Username already taken\n"))
+      continue
+    }
 
-		msg := strings.TrimSpace(string(buffer[:n]))
-		fmt.Printf("[%s] : %s\n", username, msg)
-	}
+    break
+  }
+
+  client := CreateClient(username, conn)
+
+  s.clients[username] = client
+
+  fmt.Printf("%s joined the chat\n", username)
+
+  s.Broadcast(
+    username,
+    fmt.Sprintf("%s joined the chat\n", username),
+  )
+
+  buffer := make([]byte, 1024)
+
+  for {
+    n, err := conn.Read(buffer)
+    if err != nil {
+      fmt.Printf("%s left the chat\n", username)
+
+      delete(s.clients, username)
+
+      s.Broadcast(
+        username,
+        fmt.Sprintf("%s left the chat\n", username),
+      )
+
+      return
+    }
+
+    msg := strings.TrimSpace(string(buffer[:n]))
+
+    if msg == "" {
+      continue
+    }
+
+    fmt.Printf("[%s]: %s\n", username, msg)
+
+    s.Broadcast(
+      username,
+      fmt.Sprintf("[%s]: %s\n", username, msg),
+    )
+  }
 }
 
-func (s *Server) Start() error {
-	// create a listener
-	listener, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		fmt.Printf("Error during connection:%v", err)
-	}
+func (s *Server) Start() {
+  listener, err := net.Listen("tcp", s.Address)
+  if err != nil {
+    panic(err)
+  }
 
-	fmt.Printf("Server listening on %s\n", s.Address)
-	for {
-		// creating conection
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Printf("Error during connection:%v", err)
-			continue
-		}
+  fmt.Printf("Server listening on %s\n", s.Address)
 
-		// spwans a routine for handelling client
-		go s.HandleClient(conn)
-	}
+  for {
+    conn, err := listener.Accept()
+    if err != nil {
+      fmt.Printf("Accept error: %v\n", err)
+      continue
+    }
+
+    go s.HandleClient(conn)
+  }
 }
 
 func main() {
-	server := CreateServer(":8080")
-	server.Start()
+  server := CreateServer(":8080")
+  server.Start()
 }
